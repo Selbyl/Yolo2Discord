@@ -7,20 +7,26 @@ import time
 import csv
 import os
 
+KMP_Duplicate_LIB_OK=True
+
 # Discord webhook settings
-WEBHOOK_URL = ''  # replace with your webhook URL
+WEBHOOK_URL = 'Insert Webhook URL'  # replace with your webhook URL
 
 def send_discord_message(content):
     """
     Send a message to the Discord server via the specified webhook.
     """
-    data = {"content": content}
-    response = requests.post(WEBHOOK_URL, json=data)
-    if response.status_code != 204:
-        print(f"Failed to send message to Discord. Status code: {response.status_code}")
+    # Split content into chunks of 1900 characters (to leave some buffer)
+    chunks = [content[i:i+1900] for i in range(0, len(content), 1900)]
+    
+    for chunk in chunks:
+        data = {"content": chunk}
+        response = requests.post(WEBHOOK_URL, json=data)
+        if response.status_code != 204:
+            print(f"Failed to send chunk to Discord. Status code: {response.status_code}")
 
 # Load a model
-model = YOLO('yolov8s.yaml')  # build a new model from YAML
+model = YOLO('Yolov8n.pt')  # build a new model or use yaml
 
 # Get the current date and hostname
 current_date_time = datetime.datetime.now().strftime("%m_%d_%Y_%H_%M")
@@ -36,7 +42,7 @@ training_name = f"{hostname}_{current_date_time}"
 results_path = f"./runs/detect/{training_name}/results.csv"
 
 # Assuming model.train() trains for all epochs at once
-model.train(data='./project/dataset.yaml', epochs=total_epochs, imgsz=3400, device=[0,1], augment=True, nbs=256, batch=2, name=training_name, cache="ram")
+model.train(data='./project/dataset.yaml', epochs=999999, imgsz=3400, device=[0,1], augment=True, nbs=256, batch=6, name=training_name, cache='ram', workers=32, save_period=10, patience=1000)
 
 # After training is complete, send final metrics to Discord
 elapsed_time = time.time() - start_time
